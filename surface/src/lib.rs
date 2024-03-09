@@ -31,7 +31,14 @@ impl State {
 
   fn resize(&mut self, size: &PhysicalSize<u32>) {
     if size.width == 0 || size.height == 0 { return };
-    if self.app.config.width == size.width && self.app.config.height == size.height {
+    
+    let pixel_width = ((size.width as f64) / self.app.get_view().scale_factor()).round() as u32;
+    let pixel_height = ((size.height as f64) / self.app.get_view().scale_factor()).round() as u32;
+
+    #[cfg(target_arch="wasm32")] {
+      log::info!("[resize]: pixel_width {} pixel_height {}", pixel_width, pixel_height);
+    }
+    if self.app.config.width == pixel_width && self.app.config.height == pixel_height {
       return;
     }
     self.app.resize_surface();
