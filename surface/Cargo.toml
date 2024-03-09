@@ -10,9 +10,12 @@ app-surface = "0.4.1"
 cfg-if = "1.0.0"
 env_logger = "0.11.3"
 log = "0.4.21"
-tokio = { features = ["full"] }
 wgpu = "0.19.3"
 winit = "0.29.14"
+
+# dependecies for target_arch besides wasm32
+[target."cfg(not(target_arch = \"wasm32\"))".dependencies]
+tokio = { features = ["full"] }
 
 [target."cfg(target_arch = \"wasm32\")".dependencies]
 console_error_panic_hook = "0.1.7"

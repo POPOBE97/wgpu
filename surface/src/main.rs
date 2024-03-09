@@ -1,6 +1,6 @@
 use surface::run;
 
-#[tokio::main]
-async fn main() {
-  run().await;
+fn main() {
+  #[cfg(not(target_arch = "wasm32"))]
+  tokio::runtime::Runtime::new().unwrap().block_on(run());
 }

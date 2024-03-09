@@ -4,7 +4,7 @@ use app_surface::{AppSurface, SurfaceFrame};
 use wasm_bindgen::prelude::*;
 
 use winit::{
-  dpi::PhysicalSize, event::*, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder}
+  dpi::PhysicalSize, event::*, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder
 };
 
 struct State {
@@ -16,6 +16,7 @@ impl State {
     Self { app }
   }
 
+  #[allow(dead_code)]
   fn start(&mut self) {
     let size = self.app.get_view().inner_size();
     self.resize(&size)
@@ -25,6 +26,7 @@ impl State {
     self.app.adapter.get_info()
   }
 
+  #[allow(dead_code)]
   fn current_window_id(&self) -> winit::window::WindowId {
     self.app.get_view().id()
   }
@@ -35,9 +37,8 @@ impl State {
     let pixel_width = ((size.width as f64) / self.app.get_view().scale_factor()).round() as u32;
     let pixel_height = ((size.height as f64) / self.app.get_view().scale_factor()).round() as u32;
 
-    #[cfg(target_arch="wasm32")] {
-      log::info!("[resize]: pixel_width {} pixel_height {}", pixel_width, pixel_height);
-    }
+    log::info!("[resize]: pixel_width {} pixel_height {}", pixel_width, pixel_height);
+
     if self.app.config.width == pixel_width && self.app.config.height == pixel_height {
       return;
     }
@@ -87,12 +88,14 @@ impl State {
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
   cfg_if::cfg_if! {
-   if #[cfg(target_arch="wasm32")] {
-    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-    console_log::init_with_level(log::Level::Info).expect("Couldn't initialize logger");
-   } else {
-    env_logger::init();
-   }
+    if #[cfg(target_arch="wasm32")] {
+      std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+      console_log::init_with_level(log::Level::Info).expect("Couldn't initialize logger");
+    } else {
+      // init log to print info to stdout
+      std::env::set_var("RUST_LOG", "info");
+      env_logger::init();
+    }
   }
 
   let event_loop = EventLoop::new().unwrap();
@@ -128,9 +131,11 @@ pub async fn run() {
 
   let mut state = State::new(app);
 
-  event_loop.set_control_flow(ControlFlow::Wait);
+  let adapter_info = state.get_adapter_info();
 
-  state.start();
+  log::info!("[run]: adapter_info {:?}", adapter_info);
+
+  event_loop.set_control_flow(ControlFlow::Wait);
 
   let _ = event_loop.run(move |event, control_flow| {
     match event {
@@ -142,29 +147,20 @@ pub async fn run() {
           WindowEvent::CloseRequested => control_flow.exit(),
           WindowEvent::Resized(new_size) => state.resize(new_size),
           WindowEvent::RedrawRequested => {
-            // state.update();
             match state.render() {
               Ok(_) => {}
               // Reconfigure the surface is lost
-              Err(wgpu::SurfaceError::Lost) => eprintln!("Surface is lost"),
+              Err(wgpu::SurfaceError::Lost) => log::error!("Surface is lost"),
               // The system is out of memory
               Err(wgpu::SurfaceError::OutOfMemory) => control_flow.exit(),
               // others
-              Err(e) => eprintln!("{:?}", e),
+              Err(e) => log::error!("{:?}", e),
             }
-
-            state.request_redraw()
+            state.request_redraw();
           }
           _ => {}
         }
       }
-
-      Event::AboutToWait => {
-        // RedrawRequested will only trigger once unless we manually request it.
-        // state.window().request_redraw();
-        state.app.get_view().request_redraw();
-      }
-
       _ => (),
     }
   });
