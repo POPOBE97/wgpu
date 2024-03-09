@@ -75,12 +75,15 @@ impl State {
     let pixel_width = ((size.width as f64) / self.app.get_view().scale_factor()).round() as u32;
     let pixel_height = ((size.height as f64) / self.app.get_view().scale_factor()).round() as u32;
 
-    log::info!("[resize]: pixel_width {} pixel_height {}", pixel_width, pixel_height);
+    log::info!("[resize]: target_width {} target_height {}", size.width, size.height);
+    log::info!("[resize]: scale_factor {}", self.app.get_view().scale_factor());
+    log::info!("[resize]: set_width {} set_height {}", pixel_width, pixel_height);
+    log::info!("[resize]: current_width {} current_height {}", self.app.config.width, self.app.config.height);
 
     if self.app.config.width == pixel_width && self.app.config.height == pixel_height {
       return;
     }
-    self.app.resize_surface();
+    self.app.resize_surface()
   }
 
   fn request_redraw(&mut self) {
@@ -149,8 +152,6 @@ pub async fn run() {
     log::info!("[run]: initializing html canvas");
     // Winit prevents sizing with CSS, so we have to set
     // the size manually when on web.
-    use winit::dpi::PhysicalSize;
-    // let _ = window.request_inner_size(PhysicalSize::new(100, 400));
 
     use winit::platform::web::WindowExtWebSys;
     web_sys::window()
@@ -158,8 +159,6 @@ pub async fn run() {
       .and_then(|doc| {
         let dst = doc.get_element_by_id("wgpu-container")?;
         let canvas = window.canvas().unwrap();
-        canvas.set_width((100f32 * window.scale_factor() as f32) as u32);
-        canvas.set_height((100f32 * window.scale_factor() as f32) as u32);
         let el = web_sys::HtmlCanvasElement::from(canvas);
         dst.append_child(&el).ok()?;
         Some(())
@@ -185,7 +184,11 @@ pub async fn run() {
       } if window_id == state.app.get_view().id() => {
         match event {
           WindowEvent::CloseRequested => control_flow.exit(),
-          WindowEvent::Resized(new_size) => state.resize(new_size),
+          #[allow(unused_variables)]
+          WindowEvent::Resized(new_size) => {
+            state.resize(&state.app.get_view().inner_size());
+            state.request_redraw();
+          },
           WindowEvent::RedrawRequested => {
             match state.render() {
               Ok(_) => {}

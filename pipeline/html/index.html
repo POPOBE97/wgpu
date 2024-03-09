@@ -6,14 +6,13 @@
     <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0" /> -->
     <title>Perf</title>
     <style>
-      canvas {
-        background-color: black;
-      }
+      * { margin: 0; box-sizing: border-box; }
+      body { width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; display: block; overflow: hidden;}
+      canvas { width: 100%; height: 100%; }
     </style>
   </head>
 
-  <body>
-    <div id="wgpu-container"></div>
+  <body id="wgpu-container">
     <script type="module">
       import init from "./pipeline.js";
       init().catch((error) => {
