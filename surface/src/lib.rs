@@ -1,3 +1,5 @@
+use std::default;
+
 use app_surface::{AppSurface, SurfaceFrame};
 
 #[cfg(target_arch="wasm32")]
@@ -16,19 +18,8 @@ impl State {
     Self { app }
   }
 
-  #[allow(dead_code)]
-  fn start(&mut self) {
-    let size = self.app.get_view().inner_size();
-    self.resize(&size)
-  }
-
   fn get_adapter_info(&self) -> wgpu::AdapterInfo {
     self.app.adapter.get_info()
-  }
-
-  #[allow(dead_code)]
-  fn current_window_id(&self) -> winit::window::WindowId {
-    self.app.get_view().id()
   }
 
   fn resize(&mut self, size: &PhysicalSize<u32>) {
@@ -72,9 +63,7 @@ impl State {
             store: wgpu::StoreOp::Store
           }
         })],
-        depth_stencil_attachment: None,
-        occlusion_query_set: None,
-        timestamp_writes: None,
+        ..Default::default()
       });
     }
 
@@ -101,7 +90,7 @@ pub async fn run() {
   let event_loop = EventLoop::new().unwrap();
 
   let window = WindowBuilder::new().build(&event_loop).unwrap();
-  window.set_title("Rust GPU Programming");
+  window.set_title("OpenGL Perf");
 
   // add canvas to the HTML document that we will host our application
   #[cfg(target_arch = "wasm32")]

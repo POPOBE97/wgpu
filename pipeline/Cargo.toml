@@ -1,0 +1,27 @@
+[package]
+name = "pipeline"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+app-surface = "0.4.1"
+# app-surface = { path = "../wgpu-in-app/app-surface" }
+cfg-if = "1.0.0"
+env_logger = "0.11.3"
+log = "0.4.21"
+wgpu = {version = "0.19.3", features = ["glsl"]}
+winit = "0.29.14"
+
+# dependecies for target_arch besides wasm32
+[target."cfg(not(target_arch = \"wasm32\"))".dependencies]
+tokio = { features = ["full"] }
+
+[target."cfg(target_arch = \"wasm32\")".dependencies]
+console_error_panic_hook = "0.1.7"
+console_log = "1.0.0"
+js-sys = "0.3.69"
+wasm-bindgen = "0.2.92"
+wasm-bindgen-futures = "0.4.42"
+web-sys = "0.3.69"
