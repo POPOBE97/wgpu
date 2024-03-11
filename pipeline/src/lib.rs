@@ -15,8 +15,8 @@ struct State {
   num_vertices: u32,
 }
 
+#[derive(Copy, Clone, Debug)]
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct Vertex {
   position: [f32; 3],
   color: [f32; 3],
@@ -45,9 +45,9 @@ impl Vertex {
 
 
 const VERTICES: &[Vertex] = &[
-  Vertex { position: [ 0.0, 0.5, 0.0], color: [1.0, 0.0, 0.0] },
-  Vertex { position: [-0.5,-0.5, 0.0], color: [0.0, 1.0, 0.0] },
-  Vertex { position: [ 0.5,-0.5, 0.0], color: [0.0, 0.0, 1.0] },
+  Vertex { position: [ 0.00, 0.50, 0.00], color: [1.0, 0.0, 0.0] },
+  Vertex { position: [-0.58,-0.50, 0.00], color: [0.0, 1.0, 0.0] },
+  Vertex { position: [ 0.58,-0.50, 0.00], color: [0.0, 0.0, 1.0] },
 ];
 
 impl State {
@@ -55,9 +55,13 @@ impl State {
 
     let num_vertices = VERTICES.len() as u32;
 
-    let vertex_buffer = app.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    let raw_vertices = unsafe {
+      core::slice::from_raw_parts(VERTICES.as_ptr() as *const u8, std::mem::size_of::<Vertex>() * num_vertices as usize)
+    };
+
+    let vertex_buffer: wgpu::Buffer = app.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
       label: Some("Vertex Buffer"),
-      contents: bytemuck::cast_slice(VERTICES),
+      contents: &raw_vertices,
       usage: wgpu::BufferUsages::VERTEX,
     });
 
@@ -193,6 +197,7 @@ pub async fn run() {
 
   let window = WindowBuilder::new().build(&event_loop).unwrap();
   window.set_title("OpenGL Perf");
+  let _ = window.request_inner_size(PhysicalSize::new(800, 800));
 
   // add canvas to the HTML document that we will host our application
   #[cfg(target_arch = "wasm32")]
